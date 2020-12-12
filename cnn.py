@@ -61,20 +61,20 @@ def get_embedding(word):
     #return
     try:
         return word2vec_model[word]
-    except Exception, e:
-        print 'Encoding not found: %s' %(word)
+    except Exception as e:
+        print('Encoding not found: %s' %(word))
         return np.zeros(EMBEDDING_DIM)
 
 def get_embedding_weights():
     embedding = np.zeros((len(vocab) + 1, EMBEDDING_DIM))
     n = 0
-    for k, v in vocab.iteritems():
+    for k, v in vocab.items():
         try:
             embedding[v] = word2vec_model[k]
         except:
             n += 1
             pass
-    print "%d embedding missed"%n
+    print("%d embedding missed"%n)
     #pdb.set_trace()
     return embedding
 
@@ -93,7 +93,7 @@ def select_tweets():
                 _emb+=1
         if _emb:   # Not a blank tweet
             tweet_return.append(tweet)
-    print 'Tweets selected:', len(tweet_return)
+    print('Tweets selected:', len(tweet_return))
     return tweet_return
 
 
@@ -118,9 +118,9 @@ def gen_vocab():
 
 def filter_vocab(k):
     global freq, vocab
-    freq_sorted = sorted(freq.items(), key=operator.itemgetter(1))
+    freq_sorted = sorted(list(freq.items()), key=operator.itemgetter(1))
     tokens = freq_sorted[:k]
-    vocab = dict(zip(tokens, range(1, len(tokens) + 1)))
+    vocab = dict(list(zip(tokens, list(range(1, len(tokens) + 1)))))
     vocab['UNK'] = len(vocab) + 1
 
 
@@ -153,7 +153,7 @@ def shuffle_weights(model):
 
 def cnn_model(sequence_length, embedding_dim):
     model_variation = 'CNN-rand'  #  CNN-rand | CNN-non-static | CNN-static
-    print('Model variation is %s' % model_variation)
+    print(('Model variation is %s' % model_variation))
 
     # Model Hyperparameters
     n_classes = NO_OF_CLASSES
@@ -198,13 +198,13 @@ def cnn_model(sequence_length, embedding_dim):
     model.add(Dense(n_classes))
     model.add(Activation('softmax'))
     model.compile(loss=LOSS_FUN, optimizer=OPTIMIZER, metrics=['accuracy'])
-    print model.summary()
+    print(model.summary())
     return model
 
 
 def train_CNN(X, y, inp_dim, model, weights, epochs=EPOCHS, batch_size=BATCH_SIZE):
     cv_object = KFold(n_splits=NO_OF_FOLDS, shuffle=True, random_state=42)
-    print cv_object
+    print(cv_object)
     p, r, f1 = 0., 0., 0.
     p1, r1, f11 = 0., 0., 0.
     sentence_len = X.shape[1]
@@ -214,14 +214,14 @@ def train_CNN(X, y, inp_dim, model, weights, epochs=EPOCHS, batch_size=BATCH_SIZ
         elif INITIALIZE_WEIGHTS_WITH == "random":
             shuffle_weights(model)
         else:
-            print "ERROR!"
+            print("ERROR!")
             return
 
         X_train, y_train = X[train_index], y[train_index]
         X_test, y_test = X[test_index], y[test_index]
         y_train = y_train.reshape((len(y_train), 1))
         X_temp = np.hstack((X_train, y_train))
-        for epoch in xrange(epochs):
+        for epoch in range(epochs):
             for X_batch in batch_gen(X_temp, batch_size):
                 x = X_batch[:, :sentence_len]
                 y_temp = X_batch[:, sentence_len]
@@ -236,16 +236,16 @@ def train_CNN(X, y, inp_dim, model, weights, epochs=EPOCHS, batch_size=BATCH_SIZ
                 try:
                     y_temp = np_utils.to_categorical(y_temp, nb_classes=3)
                 except Exception as e:
-                    print e
-                    print y_temp
-                print x.shape, y.shape
+                    print(e)
+                    print(y_temp)
+                print(x.shape, y.shape)
                 loss, acc = model.train_on_batch(x, y_temp, class_weight=class_weights)
-                print loss, acc
+                print(loss, acc)
         y_pred = model.predict_on_batch(X_test)
         y_pred = np.argmax(y_pred, axis=1)
-        print classification_report(y_test, y_pred)
-        print precision_recall_fscore_support(y_test, y_pred)
-        print y_pred
+        print(classification_report(y_test, y_pred))
+        print(precision_recall_fscore_support(y_test, y_pred))
+        print(y_pred)
         p += precision_score(y_test, y_pred, average='weighted')
         p1 += precision_score(y_test, y_pred, average='micro')
         r += recall_score(y_test, y_pred, average='weighted')
@@ -253,15 +253,15 @@ def train_CNN(X, y, inp_dim, model, weights, epochs=EPOCHS, batch_size=BATCH_SIZ
         f1 += f1_score(y_test, y_pred, average='weighted')
         f11 += f1_score(y_test, y_pred, average='micro')
 
-    print "macro results are"
-    print "average precision is %f" %(p/NO_OF_FOLDS)
-    print "average recall is %f" %(r/NO_OF_FOLDS)
-    print "average f1 is %f" %(f1/NO_OF_FOLDS)
+    print("macro results are")
+    print("average precision is %f" %(p/NO_OF_FOLDS))
+    print("average recall is %f" %(r/NO_OF_FOLDS))
+    print("average f1 is %f" %(f1/NO_OF_FOLDS))
 
-    print "micro results are"
-    print "average precision is %f" %(p1/NO_OF_FOLDS)
-    print "average recall is %f" %(r1/NO_OF_FOLDS)
-    print "average f1 is %f" %(f11/NO_OF_FOLDS)
+    print("micro results are")
+    print("average precision is %f" %(p1/NO_OF_FOLDS))
+    print("average recall is %f" %(r1/NO_OF_FOLDS))
+    print("average f1 is %f" %(f11/NO_OF_FOLDS))
 
 
 if __name__ == "__main__":
@@ -300,11 +300,11 @@ if __name__ == "__main__":
 
 
 
-    print 'GLOVE embedding: %s' %(GLOVE_MODEL_FILE)
-    print 'Embedding Dimension: %d' %(EMBEDDING_DIM)
-    print 'Allowing embedding learning: %s' %(str(LEARN_EMBEDDINGS))
+    print('GLOVE embedding: %s' %(GLOVE_MODEL_FILE))
+    print('Embedding Dimension: %d' %(EMBEDDING_DIM))
+    print('Allowing embedding learning: %s' %(str(LEARN_EMBEDDINGS)))
 
-    word2vec_model = gensim.models.Word2Vec.load_word2vec_format(GLOVE_MODEL_FILE)
+    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(GLOVE_MODEL_FILE)
     np.random.seed(SEED)
 
 
@@ -314,8 +314,8 @@ if __name__ == "__main__":
     #filter_vocab(20000)
     X, y = gen_sequence()
     #Y = y.reshape((len(y), 1))
-    MAX_SEQUENCE_LENGTH = max(map(lambda x:len(x), X))
-    print "max seq length is %d"%(MAX_SEQUENCE_LENGTH)
+    MAX_SEQUENCE_LENGTH = max([len(x) for x in X])
+    print("max seq length is %d"%(MAX_SEQUENCE_LENGTH))
     data = pad_sequences(X, maxlen=MAX_SEQUENCE_LENGTH)
     y = np.array(y)
     data, y = sklearn.utils.shuffle(data, y)
