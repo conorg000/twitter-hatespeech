@@ -111,7 +111,7 @@ def gen_vocab():
         text = ' '.join([c for c in text if c not in punctuation])
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         for word in words:
             #print(word)
             if word not in vocab:
@@ -148,7 +148,7 @@ def gen_sequence():
         #print(text)
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         seq, _emb = [], []
         #print(words)
         for word in words:
@@ -196,6 +196,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     
     # This way ignore the k-folds method and tracks the loss/accuracy over time
     #print(y.shape)
+    """
     y = to_categorical(y)
     print(y.shape)
     history = model.fit(X, y, validation_split=0.3, epochs=10, batch_size=batch_size)
@@ -208,7 +209,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig('logging/acc.png')
+    plt.savefig('logging/binary_acc.png')
     plt.clf()
     # summarize history for loss
     plt.plot(history.history['loss'])
@@ -217,7 +218,91 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig('logging/loss.png')
+    plt.savefig('logging/binary_loss.png')
+    """
+    cv_object = KFold(n_splits=NO_OF_FOLDS, shuffle=True, random_state=42)
+    print(cv_object)
+    p, r, f1 = 0., 0., 0.
+    p1, r1, f11 = 0., 0., 0.
+    sentence_len = X.shape[1]
+    total_loss = []
+    total_acc = []
+    for train_index, test_index in cv_object.split(X):
+        print('SPLIT {}'.format(train_index))
+        if INITIALIZE_WEIGHTS_WITH == "glove":
+            model.layers[0].set_weights([weights])
+        elif INITIALIZE_WEIGHTS_WITH == "random":
+            shuffle_weights(model)
+        else:
+            print("ERROR!")
+            return
+        X_train, y_train = X[train_index], y[train_index]
+        X_test, y_test = X[test_index], y[test_index]
+        y_train = y_train.reshape((len(y_train), 1))
+        X_temp = np.hstack((X_train, y_train))
+        for epoch in range(epochs):
+            print('EPOCH {}'.format(epoch))
+            for X_batch in batch_gen(X_temp, batch_size):
+                x = X_batch[:, :sentence_len]
+                y_temp = X_batch[:, sentence_len]
+
+                class_weights = None
+                if SCALE_LOSS_FUN:
+                    class_weights = {}
+                    class_weights[0] = np.where(y_temp == 0)[0].shape[0]/float(len(y_temp))
+                    class_weights[1] = np.where(y_temp == 1)[0].shape[0]/float(len(y_temp))
+                    class_weights[2] = np.where(y_temp == 2)[0].shape[0]/float(len(y_temp))
+
+                try:
+                    y_temp = np_utils.to_categorical(y_temp, num_classes=3)
+                except Exception as e:
+                    print(e)
+                    print(y_temp)
+                #print(x.shape, y.shape)
+                loss, acc = model.train_on_batch(x, y_temp, class_weight=class_weights)
+                total_loss.append(loss)
+                total_acc.append(acc)
+                #loss, acc = model.fit(x, y_temp, class_weight=class_weights)
+                #print(loss, acc)
+
+        y_pred = model.predict_on_batch(X_test)
+        y_pred = np.argmax(y_pred, axis=1)
+        print(classification_report(y_test, y_pred))
+        print(precision_recall_fscore_support(y_test, y_pred))
+        #print(y_pred)
+        p += precision_score(y_test, y_pred, average='weighted')
+        p1 += precision_score(y_test, y_pred, average='micro')
+        r += recall_score(y_test, y_pred, average='weighted')
+        r1 += recall_score(y_test, y_pred, average='micro')
+        f1 += f1_score(y_test, y_pred, average='weighted')
+        f11 += f1_score(y_test, y_pred, average='micro')
+
+
+    print("macro results are")
+    print("average precision is %f" %(p/NO_OF_FOLDS))
+    print("average recall is %f" %(r/NO_OF_FOLDS))
+    print("average f1 is %f" %(f1/NO_OF_FOLDS))
+
+    print("micro results are")
+    print("average precision is %f" %(p1/NO_OF_FOLDS))
+    print("average recall is %f" %(r1/NO_OF_FOLDS))
+    print("average f1 is %f" %(f11/NO_OF_FOLDS))
+
+    # summarize history for accuracy and loss
+    plt.plot(total_loss)
+    plt.title('Training loss')
+    plt.ylabel('Loss')
+    plt.xlabel('batch')
+    #plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('logging/binary_training_loss.png')
+    plt.clf()
+    plt.plot(total_acc)
+    plt.title('Training accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('batch')
+    #plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('logging/binary_training_acc.png')
+    plt.clf()
     
 
 if __name__ == "__main__":

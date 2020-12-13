@@ -111,7 +111,7 @@ def gen_vocab():
         text = ' '.join([c for c in text if c not in punctuation])
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         for word in words:
             #print(word)
             if word not in vocab:
@@ -149,7 +149,7 @@ def gen_sequence():
         #print(text)
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         seq, _emb = [], []
         #print(words)
         for word in words:
@@ -199,7 +199,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     #print(y.shape)
     y = to_categorical(y)
     print(y.shape)
-    history = model.fit(X, y, validation_split=0.3, epochs=10, batch_size=batch_size)
+    history = model.fit(X, y, validation_split=0.1, epochs=10, batch_size=batch_size)
     print(history.history.keys())
     # Plot
     # summarize history for accuracy
@@ -208,7 +208,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.savefig('logging/acc.png')
     plt.clf()
     # summarize history for loss
@@ -217,7 +217,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.savefig('logging/loss.png')
     
 
