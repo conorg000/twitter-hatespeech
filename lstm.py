@@ -108,9 +108,10 @@ def gen_vocab():
     for tweet in tweets:
         #print(tweet)
         text = TOKENIZER(tweet['text'].lower())
-        text = ''.join([c for c in text if c not in punctuation])
+        text = ' '.join([c for c in text if c not in punctuation])
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
+        print(words)
         for word in words:
             #print(word)
             if word not in vocab:
@@ -144,11 +145,11 @@ def gen_sequence():
     for tweet in tweets:
         #print(tweet)
         text = TOKENIZER(tweet['text'].lower())
-        text = ''.join([c for c in text if c not in punctuation])
+        text = ' '.join([c for c in text if c not in punctuation])
         #print(text)
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        #print(words)
+        print(words)
         seq, _emb = [], []
         #print(words)
         for word in words:
@@ -198,7 +199,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     #print(y.shape)
     y = to_categorical(y)
     print(y.shape)
-    history = model.fit(X, y, validation_split=0.2, epochs=37, batch_size=batch_size)
+    history = model.fit(X, y, validation_split=0.3, epochs=10, batch_size=batch_size)
     print(history.history.keys())
     # Plot
     # summarize history for accuracy
@@ -208,7 +209,8 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plt.savefig('logging/acc.png')
+    plt.clf()
     # summarize history for loss
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -216,7 +218,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plt.savefig('logging/loss.png')
 
     """
 
