@@ -111,7 +111,7 @@ def gen_vocab():
         text = ' '.join([c for c in text if c not in punctuation])
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         for word in words:
             #print(word)
             if word not in vocab:
@@ -149,7 +149,7 @@ def gen_sequence():
         #print(text)
         words = text.split()
         words = [word for word in words if word not in STOPWORDS]
-        print(words)
+        #print(words)
         seq, _emb = [], []
         #print(words)
         for word in words:
@@ -197,6 +197,7 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     
     # This way ignore the k-folds method and tracks the loss/accuracy over time
     #print(y.shape)
+    """
     y = to_categorical(y)
     print(y.shape)
     history = model.fit(X, y, validation_split=0.3, epochs=10, batch_size=batch_size)
@@ -219,7 +220,6 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.savefig('logging/loss.png')
-
     """
 
     cv_object = KFold(n_splits=NO_OF_FOLDS, shuffle=True, random_state=42)
@@ -227,6 +227,8 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     p, r, f1 = 0., 0., 0.
     p1, r1, f11 = 0., 0., 0.
     sentence_len = X.shape[1]
+    total_loss = []
+    total_acc = []
     for train_index, test_index in cv_object.split(X):
         print('SPLIT {}'.format(train_index))
         if INITIALIZE_WEIGHTS_WITH == "glove":
@@ -260,6 +262,8 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
                     print(y_temp)
                 #print(x.shape, y.shape)
                 loss, acc = model.train_on_batch(x, y_temp, class_weight=class_weights)
+                total_loss.append(loss)
+                total_acc.append(acc)
                 #loss, acc = model.fit(x, y_temp, class_weight=class_weights)
                 #print(loss, acc)
 
@@ -285,7 +289,23 @@ def train_LSTM(X, y, model, inp_dim, weights, epochs=EPOCHS, batch_size=BATCH_SI
     print("average precision is %f" %(p1/NO_OF_FOLDS))
     print("average recall is %f" %(r1/NO_OF_FOLDS))
     print("average f1 is %f" %(f11/NO_OF_FOLDS))
-    """
+
+    # summarize history for accuracy and loss
+    plt.plot(total_loss)
+    plt.title('Training loss')
+    plt.ylabel('Loss')
+    plt.xlabel('batch')
+    #plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('logging/training_loss.png')
+    plt.clf()
+    plt.plot(total_acc)
+    plt.title('Training accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('batch')
+    #plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('logging/training_acc.png')
+    plt.clf()
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='LSTM based models for twitter Hate speech detection')
@@ -355,10 +375,10 @@ if __name__ == "__main__":
     train_LSTM(data, y, model, EMBEDDING_DIM, W)
     
     # Save model
-    model.save('models/lstm_random_dim200_epoch10_batch128.h5')
+    model.save('models/lstmCV_random_dim200_epoch10_batch128.h5')
     
     # save embeddings
     embeddings = model.layers[0].get_weights()[0]
-    np.save('models/EMBEDDINGS_lstm_random_dim200_epoch10_batch128.npy', embeddings)
+    np.save('models/EMBEDDINGS_lstmCV_random_dim200_epoch10_batch128.npy', embeddings)
 
     pdb.set_trace()
